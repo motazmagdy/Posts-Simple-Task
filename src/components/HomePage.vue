@@ -45,9 +45,14 @@
     </div>
     <!-- End Empty Data -->
 
-    <button class="load-btn" @click="loadMore">Load Posts
-        <i v-if="loadingMorePosts" class="fa-spin fas fa-spinner ms-2"></i>
+    <button v-if="!lastResults" :disabled="loadingMorePosts" :class="{ 'disabled-btn': loadingMorePosts}" class="load-btn" @click="loadMore">Load More
     </button>
+
+    <div  class="posts-container width-margin">
+        <div  class="post paginaion-data">
+           <span v-if="lastResults">No more posts ,</span> Showing {{ posts?.length }} posts , on Page {{ currentPage }} of Total {{ !serverError ? totalPostsNo : 0 }} . 
+        </div>
+    </div>
 </template>
   
   <script>
@@ -66,7 +71,7 @@
             serverError : false ,
             currentPage : 1 ,
             lastPage : 1 ,
-            totalPostsNo : 0 ,
+            totalPostsNo : 100 ,
             perPage : 10 ,
             lastResults : false ,
             loadingMorePosts : false 
@@ -81,11 +86,12 @@
     },
     methods : {
         getPosts(){
-            this.isLoadingFirstPosts = true ;
+            if(this.currentPage === 1){
+                this.isLoadingFirstPosts = true ;
+            }
             this.serverError = false ;
             axios.get(`https://jsonplaceholder.typicode.com/posts?_page=${this.currentPage}&_per_page=${10}`)
             .then((response)=>{
-                console.log("original response",response?.data)
                 const modifiedReponse = response?.data?.map((post)=>{
                     let phone = `+(20) 111 011 ${post?.id}`
                     phone = phone.padEnd(18 , 0)
@@ -96,20 +102,14 @@
                         imgSrc : `https://picsum.photos/600/300/?image=${post.id}`
                     }
                 })
-                console.log("modified Reponse",modifiedReponse)
                 this.posts = [...this.posts , ...modifiedReponse ] ;
                 this.isLoadingFirstPosts = false ;
                 this.serverError = false ;
-                this.totalPostsNo = this.posts.length ;
-                console.log("Total posts" , this.totalPostsNo);
                 if(response?.data?.length === 10){
-                    this.lastPage === this.currentPage + 1 ;
-                    console.log(this.lastPage);
-                    console.log("lastPadddge" , this.lastPage);
+                    this.lastPage = this.currentPage + 1 ;
                 }else{
-                    this.lastPage === this.currentPage
+                    this.lastPage === this.currentPage ;
                     this.lastResults = true ;
-                    console.log("lastPage" , this.lastPage);
                 }
                 this.loadingMorePosts = false ;
             })
@@ -125,12 +125,10 @@
         },
         loadMore(){
             if(this.currentPage !== this.lastPage && this.currentPage < this.lastPage){
-                console.log(1);
-                this.loadingMorePosts = true ;
                 this.currentPage++ ;
+                this.loadingMorePosts = true ;
                 this.getPosts();
             }else{
-                console.log(2);
                 this.lastResults = true ;
             }
         }
@@ -182,6 +180,16 @@
         border-radius: 5px;
         font-weight: 700;
         cursor: pointer;
+    }
+    .disabled-btn{
+        background-color: #8b8495;
+        cursor:wait ;
+    }
+    .paginaion-data{
+        color: #8d8080;
+        font-weight: 700;
+        font-size: medium;  
+        padding-block: 15px;
     }
   @media screen and (max-width : 765px){
     .width-margin{
